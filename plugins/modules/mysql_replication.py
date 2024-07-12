@@ -158,6 +158,13 @@ options:
     type: str
     version_added: '0.1.0'
     aliases: [master_use_gtid]
+  primary_assign_gtid_to_anon:
+    description:
+    - Configures the replica to create GTIDs for transactions from a legacy binlog master.
+    - For more information see U(ttps://dev.mysql.com/doc/mysql-replication-excerpt/8.0/en/replication-gtids-assign-anon.html)
+    aliases: [master_assign_gtid__to_anon]
+    type: bool
+    version_added: '8.0.23
   primary_delay:
     description:
     - Time lag behind the primary's state (in seconds).
@@ -502,6 +509,7 @@ def main():
         primary_ssl_verify_server_cert=dict(type='bool', default=False),
         primary_use_gtid=dict(type='str', choices=[
             'current_pos', 'replica_pos', 'disabled'], aliases=['master_use_gtid']),
+        primary_assign_gtid_to_anon=dict(type='bool', default=False), aliases=['master_assign_gtid_to_anon']),
         primary_delay=dict(type='int', aliases=['master_delay']),
         connection_name=dict(type='str'),
         channel=dict(type='str'),
@@ -542,6 +550,7 @@ def main():
         primary_use_gtid = 'no'
     else:
         primary_use_gtid = module.params["primary_use_gtid"]
+    primary_assign_gtid_to_anon = module.params["primary_assign_gtid_to_anon"]
     connection_name = module.params["connection_name"]
     channel = module.params['channel']
     fail_on_error = module.params['fail_on_error']
@@ -648,6 +657,8 @@ def main():
             chm.append("SOURCE_SSL_VERIFY_SERVER_CERT=1")
         if primary_auto_position:
             chm.append("MASTER_AUTO_POSITION=1")
+        if primary_assign_gtid_to_anon:
+            chm.append("ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS=1")
         if primary_use_gtid is not None:
             chm.append("MASTER_USE_GTID=%s" % primary_use_gtid)
         try:
